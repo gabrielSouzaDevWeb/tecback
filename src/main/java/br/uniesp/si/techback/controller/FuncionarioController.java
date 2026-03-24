@@ -24,10 +24,10 @@ public class FuncionarioController {
 
     @GetMapping
     public List<Funcionario> listar() {
-        //log.info("Listando todos os filmes");
-        List<Funcionario> filmes = service.listar();
-        //log.debug("Total de filmes encontrados: {}", filmes.size());
-        return filmes;
+        //log.info("Listando todos os funcionario");
+        List<Funcionario> funcionarios = service.listar();
+        //log.debug("Total de funcionario encontrados: {}", funcionario.size());
+        return funcionarios;
     }
 
     @GetMapping("/{id}")
@@ -43,20 +43,20 @@ public class FuncionarioController {
     }
 
     @PostMapping
-    public ResponseEntity<Funcionario> criar(@Valid @RequestBody Funcionario filme) {
+    public ResponseEntity<Funcionario> criar(@Valid @RequestBody Funcionario funcionario) {
         // log.info("Recebida requisição para criar novo filme: {}", filme.getNome());
         try {
-            Funcionario filmeSalvo = service.salvar(filme);
+            Funcionario funcionarioSalvo = service.salvar(funcionario);
             // log.info("Funcionario criado com sucesso. ID: {}, Título: {}", filmeSalvo.getId(), filmeSalvo.getNome());
 
             URI location = ServletUriComponentsBuilder
                     .fromCurrentRequest()
                     .path("/{id}")
-                    .buildAndExpand(filmeSalvo.getId())
+                    .buildAndExpand(funcionarioSalvo.getId())
                     .toUri();
             // log.debug("URI de localização do novo filme: {}", location);
 
-            return ResponseEntity.created(location).body(filmeSalvo);
+            return ResponseEntity.created(location).body(funcionarioSalvo);
         } catch (Exception e) {
             //   log.error("Erro ao criar filme: {}", e.getMessage(), e);
             throw e;
@@ -64,12 +64,12 @@ public class FuncionarioController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Funcionario> atualizar(@PathVariable Long id, @Valid @RequestBody Funcionario filme) {
+    public ResponseEntity<Funcionario> atualizar(@PathVariable Long id, @Valid @RequestBody Funcionario funcionario) {
         //  log.info("Atualizando filme com ID {}: {}", id, filme);
         try {
-            Funcionario filmeAtualizado = service.atualizar(id, filme);
+            Funcionario funcionarioAtualizado = service.atualizar(id, funcionario);
             //  log.debug("Funcionario ID {} atualizado com sucesso", id);
-            return ResponseEntity.ok(filmeAtualizado);
+            return ResponseEntity.ok(funcionarioAtualizado);
         } catch (Exception e) {
             //  log.error("Erro ao atualizar filme ID {}: {}", id, e.getMessage(), e);
             return ResponseEntity.notFound().build();
