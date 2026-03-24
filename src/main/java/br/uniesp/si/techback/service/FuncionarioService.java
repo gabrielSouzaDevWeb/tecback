@@ -1,5 +1,8 @@
 package br.uniesp.si.techback.service;
 
+import br.uniesp.si.techback.dto.FuncionarioDTO;
+import br.uniesp.si.techback.exception.ResourceNotFoundException;
+import br.uniesp.si.techback.mapper.FuncionarioMapper;
 import br.uniesp.si.techback.model.Funcionario;
 import br.uniesp.si.techback.repository.FuncionarioRepository;
 import jakarta.transaction.Transactional;
@@ -15,103 +18,54 @@ import java.util.List;
 public class FuncionarioService {
 
     private final FuncionarioRepository repository;
+    private final FuncionarioMapper mapper;
 
-    public List<Funcionario> listar() {
-        log.info("Buscando todos os funcionario cadastrados");
-        try {
-            List<Funcionario> funcionario = repository.findAll();
-            log.debug("Total de funcionario encontrados: {}", funcionario.size());
-            return funcionario;
-        } catch (Exception e) {
-            log.error("Falha ao buscar funcionario: {}", e.getMessage(), e);
-            throw e;
-        }
+    public List<FuncionarioDTO> listar() {
+        log.info("Buscando todos os funcionarios cadastrados");
+        List<FuncionarioDTO> funcionarios = repository.findAll()
+                .stream()
+                .map(mapper::toDTO)
+                .toList();
+        log.debug("Total de funcionarios encontrados: {}", funcionarios.size());
+        return funcionarios;
     }
 
-    /**
-     * @param id o ID do funcionario.
-     * @return o funcionario encontrado, ou lança uma exceção {@link RuntimeException} se o funcionario não existir.
-     */
-    public Funcionario buscarPorId(Long id) {
+    public FuncionarioDTO buscarPorId(Long id) {
         log.info("Buscando funcionario pelo ID: {}", id);
-        return repository.findById(id)
-                .map(funcionario -> {
-                    log.debug("funcionario encontrado: ID={}, Título={}", funcionario.getId(), funcionario.getNome());
-                    return funcionario;
-                })
-                .orElseThrow(() -> {
-                    String mensagem = String.format("funcionario não encontrado com o ID: %d", id);
-                    log.warn(mensagem);
-                    return new RuntimeException(mensagem);
-                });
+        Funcionario funcionario = buscarFuncionarioEntidadePorId(id);
+        log.debug("Funcionario encontrado: ID={}, Nome={}", funcionario.getId(), funcionario.getNome());
+        return mapper.toDTO(funcionario);
     }
 
-    /**
-     * Atualiza um funcionario existente.
-     *
-     * @param id    o ID do funcionario a ser atualizado.
-     * @param funcionario o funcionario com as informações atualizadas.
-     * @return o funcionario atualizado.
-     */
     @Transactional
-    public Funcionario atualizar(Long id, Funcionario funcionario) {
+    public FuncionarioDTO atualizar(Long id, FuncionarioDTO funcionarioDTO) {
         log.info("Atualizando funcionario ID: {}", id);
-        return repository.findById(id)
-                .map(funcionarioExistente -> {
-                    log.debug("Dados atuais do funcionario: {}", funcionarioExistente);
-                    log.debug("Novos dados: {}", funcionario);
-                    funcionario.setId(id);
-                    Funcionario funcionarioAtualizado = repository.save(funcionario);
-                    log.info("Funcionario ID: {} atualizado com sucesso. Novo título: {}",
-                            id, funcionarioAtualizado.getNome());
-                    return funcionarioAtualizado;
-                })
-                .orElseThrow(() -> {
-                    String mensagem = String.format("Falha ao atualizar: funcionario não encontrado com o ID: %d", id);
-                    log.warn(mensagem);
-                    return new RuntimeException(mensagem);
-                });
+        Funcionario funcionarioExistente = buscarFuncionarioEntidadePorId(id);
+        mapper.updateEntity(funcionarioExistente, funcionarioDTO);
+        Funcionario funcionarioAtualizado = repository.save(funcionarioExistente);
+        log.info("Funcionario ID: {} atualizado com sucesso", id);
+        return mapper.toDTO(funcionarioAtualizado);
     }
 
-    /**
-     * Salva um novo funcionario.
-     *
-     * @param funcionario o funcionario a ser salvo.
-     * @return o funcionario salvo.
-     */
     @Transactional
-    public Funcionario salvar(Funcionario funcionario) {
-        log.info("Salvando novo funcionario: {}", funcionario.getNome());
-        try {
-            Funcionario funcionarioSalvo = repository.save(funcionario);
-            log.info("Funcionario salvo com sucesso. ID: {}, Título: {}", funcionarioSalvo.getId(), funcionarioSalvo.getNome());
-            return funcionarioSalvo;
-        } catch (Exception e) {
-            log.error("Falha ao salvar funcionario '{}': {}", funcionario.getNome(), e.getMessage(), e);
-            throw e;
-        }
+    public FuncionarioDTO salvar(FuncionarioDTO funcionarioDTO) {
+        log.info("Salvando novo funcionario: {}", funcionarioDTO.getNome());
+        Funcionario funcionarioSalvo = repository.save(mapper.toEntity(funcionarioDTO));
+        log.info("Funcionario salvo com sucesso. ID: {}, Nome: {}", funcionarioSalvo.getId(), funcionarioSalvo.getNome());
+        return mapper.toDTO(funcionarioSalvo);
     }
 
-    /**
-     * Exclui um funcionario existente.
-     *
-     * @param id o ID do funcionario a ser excluído.
-     */
     @Transactional
     public void excluir(Long id) {
         log.info("Excluindo funcionario ID: {}", id);
-        if (!repository.existsById(id)) {
-            String mensagem = String.format("Falha ao excluir: funcionario não encontrado com o ID: %d", id);
-            log.warn(mensagem);
-            throw new RuntimeException(mensagem);
-        }
-        try {
-            repository.deleteById(id);
-            log.info("Funcionario ID: {} excluído com sucesso", id);
-        } catch (Exception e) {
-            log.error("Erro ao excluir funcionario ID {}: {}", id, e.getMessage(), e);
-            throw e;
-        }
+        Funcionario funcionario = buscarFuncionarioEntidadePorId(id);
+        repository.delete(funcionario);
+        log.info("Funcionario ID: {} excluido com sucesso", id);
+    }
+
+    private Funcionario buscarFuncionarioEntidadePorId(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Funcionario nao encontrado com o ID: " + id));
     }
 
 

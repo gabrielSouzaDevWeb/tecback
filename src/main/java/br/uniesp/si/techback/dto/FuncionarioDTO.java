@@ -1,7 +1,5 @@
-package br.uniesp.si.techback.model;
+package br.uniesp.si.techback.dto;
 
-
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -11,22 +9,16 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "funcionario")
-public class Funcionario {
+public class FuncionarioDTO {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
-    @Column(nullable = false, length = 255)
     @NotBlank(message = "O nome e obrigatorio")
     @Size(max = 255, message = "O nome deve ter no maximo 255 caracteres")
     private String nome;
 
-    @Column(nullable = false, length = 255)
     @NotBlank(message = "O cargo e obrigatorio")
     @Size(max = 255, message = "O cargo deve ter no maximo 255 caracteres")
     private String cargo;
 }
+
